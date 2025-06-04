@@ -32,7 +32,7 @@ const configSchema = zod_1.z.object({
     FROM_NAME: zod_1.z.string().optional(),
     ALLOWED_ORIGINS: zod_1.z
         .string()
-        .default("http://localhost:3000,http://localhost:8000,https://knugget.com,chrome-extension://"),
+        .default("http://localhost:8000,https://knugget-new-client.vercel.app,chrome-extension://,https://knugget-new-backend.onrender.com"),
     RATE_LIMIT_WINDOW_MS: zod_1.z.string().transform(Number).default("900000"),
     RATE_LIMIT_MAX_REQUESTS_FREE: zod_1.z.string().transform(Number).default("10"),
     RATE_LIMIT_MAX_REQUESTS_PREMIUM: zod_1.z.string().transform(Number).default("100"),

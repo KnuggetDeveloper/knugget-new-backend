@@ -30,20 +30,25 @@ app.use((0, cors_1.default)({
     origin: (origin, callback) => {
         if (!origin)
             return callback(null, true);
-        if (index_1.config.cors.allowedOrigins.some((allowedOrigin) => origin.startsWith(allowedOrigin) ||
+        const allowedOrigins = [
+            "http://localhost:8000",
+            "https://knugget-new-client.vercel.app",
+            "chrome-extension://",
+            "https://knugget-new-backend.onrender.com",
+        ];
+        if (allowedOrigins.some((allowedOrigin) => origin.startsWith(allowedOrigin) ||
             (allowedOrigin === "chrome-extension://" &&
                 origin.startsWith("chrome-extension://")))) {
             return callback(null, true);
         }
-        if (index_1.config.server.nodeEnv === 'development') {
-            logger_1.logger.warn('CORS blocked origin:', { origin });
-        }
+        logger_1.logger.warn('CORS blocked origin:', { origin });
         callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-    optionsSuccessStatus: 200,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+    exposedHeaders: ["Content-Range", "X-Content-Range"],
+    maxAge: 86400,
 }));
 app.use(express_1.default.json({ limit: "10mb" }));
 app.use(express_1.default.urlencoded({ extended: true, limit: "10mb" }));
