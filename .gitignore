@@ -1,0 +1,13 @@
+node_modules
+# Keep environment variables out of version control
+.env
+
+/generated/prisma
+
+logs
+
+# Ignore all files in the logs directory
+logs/*
+
+# Ignore all files in the logs directory
+logs/*
