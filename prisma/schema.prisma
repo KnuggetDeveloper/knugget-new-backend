@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -48,6 +42,7 @@ model User {
   // Relations
   summaries     Summary[]
   refreshTokens RefreshToken[]
+  linkedinPosts LinkedinPost[]
 
   @@map("users")
 }
@@ -99,6 +94,34 @@ model Summary {
   @@index([videoId])
   @@index([createdAt])
   @@map("summaries")
+}
+
+model LinkedinPost {
+  id              String   @id @default(cuid())
+  title           String?
+  content         String
+  author          String
+  postUrl         String
+  linkedinPostId  String?
+  platform        String   @default("linkedin")
+  engagement      Json?    // Store likes, comments, shares
+  metadata        Json?    // Store additional metadata
+  savedAt         DateTime @default(now())
+  
+  // User relation
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Indexes
+  @@index([userId])
+  @@index([savedAt])
+  @@index([platform])
+  @@unique([userId, postUrl]) // Prevent duplicate saves
+  @@map("linkedin_posts")
 }
 
 model VideoMetadata {

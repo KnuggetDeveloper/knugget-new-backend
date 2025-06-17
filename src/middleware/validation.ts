@@ -204,3 +204,66 @@ export const validate = (schema: z.ZodSchema) => {
     }
   };
 };
+
+export const saveLinkedinPostSchema = z.object({
+  body: z.object({
+    title: z.string().max(500, "Title too long").optional(),
+    content: z.string().min(1, "Content is required").max(10000, "Content too long"),
+    author: z.string().min(1, "Author is required").max(200, "Author name too long"),
+    postUrl: z.string().url("Invalid post URL"),
+    linkedinPostId: z.string().optional(),
+    platform: z.string().default("linkedin"),
+    engagement: z.object({
+      likes: z.number().min(0).optional(),
+      comments: z.number().min(0).optional(),
+      shares: z.number().min(0).optional(),
+    }).optional(),
+    metadata: z.object({
+      timestamp: z.string().optional(),
+      source: z.string().optional(),
+    }).optional(),
+  }),
+});
+
+export const updateLinkedinPostSchema = z.object({
+  body: z.object({
+    title: z.string().max(500, "Title too long").optional(),
+    content: z.string().min(1, "Content cannot be empty").max(10000, "Content too long").optional(),
+    author: z.string().min(1, "Author cannot be empty").max(200, "Author name too long").optional(),
+    engagement: z.object({
+      likes: z.number().min(0).optional(),
+      comments: z.number().min(0).optional(),
+      shares: z.number().min(0).optional(),
+    }).optional(),
+    metadata: z.object({
+      timestamp: z.string().optional(),
+      source: z.string().optional(),
+    }).optional(),
+  }),
+});
+
+export const linkedinPostQuerySchema = z.object({
+  query: z.object({
+    page: z
+      .string()
+      .transform(Number)
+      .pipe(z.number().int().min(1))
+      .default("1")
+      .optional(),
+    limit: z
+      .string()
+      .transform(Number)
+      .pipe(z.number().int().min(1).max(100))
+      .default("20")
+      .optional(),
+    search: z.string().max(100).optional(),
+    author: z.string().max(200).optional(),
+    startDate: z.string().datetime().optional(),
+    endDate: z.string().datetime().optional(),
+    sortBy: z
+      .enum(["savedAt", "createdAt", "author", "title"])
+      .default("savedAt")
+      .optional(),
+    sortOrder: z.enum(["asc", "desc"]).default("desc").optional(),
+  }),
+});

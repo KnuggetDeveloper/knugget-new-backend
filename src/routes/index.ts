@@ -1,3 +1,4 @@
+// Updated src/routes/index.ts
 import { Router } from 'express';
 import { ApiResponse } from '../types';
 import { openaiService } from '../services/openai';
@@ -6,6 +7,7 @@ import { logger } from '../config/logger';
 import authRoutes from './auth';
 import summaryRoutes from './summary';
 import userRoutes from './user';
+import linkedinRoutes from './linkedin';
 
 const router = Router();
 
@@ -60,12 +62,13 @@ router.get('/', (req, res) => {
     data: {
       name: 'Knugget AI API',
       version: '1.0.0',
-      description: 'AI-powered YouTube video summarization API',
+      description: 'AI-powered YouTube video summarization and LinkedIn content saving API',
       environment: process.env.NODE_ENV,
       endpoints: {
         auth: '/api/auth',
         summary: '/api/summary',
         user: '/api/user',
+        linkedin: '/api/linkedin',
         health: '/api/health',
       },
       documentation: 'https://docs.knugget.com/api',
@@ -79,5 +82,6 @@ router.get('/', (req, res) => {
 router.use('/auth', authRoutes);
 router.use('/summary', summaryRoutes);
 router.use('/user', userRoutes);
+router.use('/linkedin', linkedinRoutes);
 
 export default router;

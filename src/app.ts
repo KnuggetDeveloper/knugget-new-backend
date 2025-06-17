@@ -132,8 +132,8 @@ const startServer = async () => {
     await prisma.$connect();
     logger.info("Database connected successfully");
 
-    const server = app.listen(process.env.PORT, () => {
-      logger.info(`🚀 Knugget API server running on port ${process.env.PORT}`);
+    const server = app.listen(3000, () => {
+      logger.info(`🚀 Knugget API server running on port 3000`);
       logger.info(`📡 Environment: ${config.server.nodeEnv}`);
       logger.info(`🔗 API Base URL: ${config.server.apiBaseUrl}`);
       logger.info(`🌐 CORS Origins: ${config.cors.allowedOrigins.join(', ')}`);
