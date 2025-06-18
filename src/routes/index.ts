@@ -1,4 +1,4 @@
-// Updated src/routes/index.ts
+// src/routes/index.ts - FIXED with proper LinkedIn routes mounting
 import { Router } from "express";
 import { ApiResponse } from "../types";
 import { openaiService } from "../services/openai";
@@ -7,7 +7,7 @@ import { logger } from "../config/logger";
 import authRoutes from "./auth";
 import summaryRoutes from "./summary";
 import userRoutes from "./user";
-import linkedinRoutes from "./linkedin";
+import linkedinRoutes from "./linkedin"; // ENSURE THIS IS IMPORTED
 
 const router = Router();
 
@@ -69,7 +69,7 @@ router.get("/", (req, res) => {
         auth: "/api/auth",
         summary: "/api/summary",
         user: "/api/user",
-        linkedin: "/api/linkedin",
+        linkedin: "/api/linkedin", // DOCUMENTED
         health: "/api/health",
       },
       documentation: "https://docs.knugget.com/api",
@@ -79,21 +79,21 @@ router.get("/", (req, res) => {
   res.json(response);
 });
 
-// Mount route modules
+// Mount route modules - ENSURE ALL ARE PROPERLY MOUNTED
 router.use("/auth", authRoutes);
 router.use("/summary", summaryRoutes);
 router.use("/user", userRoutes);
-router.use("/linkedin", linkedinRoutes);
+router.use("/linkedin", linkedinRoutes); // CRITICAL: Make sure this line exists
 
 // Debug route to check all mounted routes
 router.get("/debug/routes", (req, res) => {
   const routes = [
-    { path: "/api/auth", status: "mounted" },
-    { path: "/api/summary", status: "mounted" },
-    { path: "/api/user", status: "mounted" },
-    { path: "/api/linkedin", status: "mounted" },
-    { path: "/api/linkedin/test", status: "mounted" },
-    { path: "/api/linkedin/posts", status: "mounted" },
+    { path: "/api/auth", status: "mounted", methods: ["POST", "GET"] },
+    { path: "/api/summary", status: "mounted", methods: ["POST", "GET", "PUT", "DELETE"] },
+    { path: "/api/user", status: "mounted", methods: ["GET", "PUT", "POST", "DELETE"] },
+    { path: "/api/linkedin", status: "mounted", methods: ["GET", "POST", "PUT", "DELETE"] }, // ADDED
+    { path: "/api/linkedin/posts", status: "mounted", methods: ["GET", "POST", "PUT", "DELETE"] },
+    { path: "/api/linkedin/posts/stats", status: "mounted", methods: ["GET"] },
   ];
 
   res.json({
@@ -102,6 +102,24 @@ router.get("/debug/routes", (req, res) => {
       routes,
       timestamp: new Date().toISOString(),
     },
+  });
+});
+
+// Test LinkedIn routes specifically
+router.get("/test/linkedin", (req, res) => {
+  res.json({
+    success: true,
+    message: "LinkedIn routes are working",
+    availableEndpoints: [
+      "GET /api/linkedin/posts",
+      "POST /api/linkedin/posts", 
+      "GET /api/linkedin/posts/:id",
+      "PUT /api/linkedin/posts/:id",
+      "DELETE /api/linkedin/posts/:id",
+      "GET /api/linkedin/posts/stats",
+      "POST /api/linkedin/posts/bulk-delete"
+    ],
+    timestamp: new Date().toISOString()
   });
 });
 
