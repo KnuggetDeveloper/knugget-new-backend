@@ -85,8 +85,27 @@ app.use(
   })
 );
 
-// API routes
+// CRITICAL: Debug middleware to log all routes
+app.use((req, res, next) => {
+  console.log(`🔍 ${req.method} ${req.path} - ${new Date().toISOString()}`);
+  next();
+});
+
+// API routes - CRITICAL: This must mount all routes including LinkedIn
 app.use("/api", routes);
+
+// ADDITIONAL DEBUG: List all registered routes at startup
+app._router?.stack?.forEach((middleware: any) => {
+  if (middleware.route) {
+    console.log(`📍 Route: ${Object.keys(middleware.route.methods).join(', ').toUpperCase()} ${middleware.route.path}`);
+  } else if (middleware.name === 'router') {
+    middleware.handle?.stack?.forEach((handler: any) => {
+      if (handler.route) {
+        console.log(`📍 Nested Route: ${Object.keys(handler.route.methods).join(', ').toUpperCase()} ${handler.route.path}`);
+      }
+    });
+  }
+});
 
 // Error handling
 app.use(notFoundHandler);
@@ -132,11 +151,19 @@ const startServer = async () => {
     await prisma.$connect();
     logger.info("Database connected successfully");
 
-    const server = app.listen(process.env.PORT, () => {
-      logger.info(`🚀 Knugget API server running on port ${process.env.PORT}`);
+    const server = app.listen(process.env.PORT || 3000, () => {
+      logger.info(`🚀 Knugget API server running on port ${process.env.PORT || 3000}`);
       logger.info(`📡 Environment: ${config.server.nodeEnv}`);
       logger.info(`🔗 API Base URL: ${config.server.apiBaseUrl}`);
       logger.info(`🌐 CORS Origins: ${config.cors.allowedOrigins.join(', ')}`);
+      
+      // CRITICAL: Log all available routes at startup
+      console.log('\n📋 Available API Routes:');
+      console.log('├── /api/health');
+      console.log('├── /api/auth/*');
+      console.log('├── /api/summary/*');
+      console.log('├── /api/user/*');
+      console.log('└── /api/linkedin/*'); // This should appear!
     });
 
     server.on("error", (error: NodeJS.ErrnoException) => {
@@ -144,7 +171,7 @@ const startServer = async () => {
         throw error;
       }
 
-      const bind = `Port ${process.env.PORT}`;
+      const bind = `Port ${process.env.PORT || 3000}`;
 
       switch (error.code) {
         case "EACCES":
