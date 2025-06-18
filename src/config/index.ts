@@ -45,11 +45,6 @@ const configSchema = z.object({
       "http://localhost:8000,https://knugget-new-client.vercel.app,chrome-extension://,https://knugget-new-backend.onrender.com"
     ),
 
-  // Rate Limiting
-  RATE_LIMIT_WINDOW_MS: z.string().transform(Number).default("900000"),
-  RATE_LIMIT_MAX_REQUESTS_FREE: z.string().transform(Number).default("10"),
-  RATE_LIMIT_MAX_REQUESTS_PREMIUM: z.string().transform(Number).default("100"),
-
   // Logging
   LOG_LEVEL: z.enum(["error", "warn", "info", "debug"]).default("info"),
   LOG_FILE: z.string().default("logs/app.log"),
@@ -105,11 +100,6 @@ export const config = {
     allowedOrigins: parsed.data.ALLOWED_ORIGINS.split(",").map((origin) =>
       origin.trim()
     ),
-  },
-  rateLimit: {
-    windowMs: parsed.data.RATE_LIMIT_WINDOW_MS,
-    maxRequestsFree: parsed.data.RATE_LIMIT_MAX_REQUESTS_FREE,
-    maxRequestsPremium: parsed.data.RATE_LIMIT_MAX_REQUESTS_PREMIUM,
   },
   logging: {
     level: parsed.data.LOG_LEVEL,

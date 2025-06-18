@@ -2,38 +2,36 @@ import { Router } from "express";
 import { userController } from "../controllers/user";
 import { authenticate } from "../middleware/auth";
 import { validate } from "../middleware/validation";
-import { generalRateLimit, strictRateLimit } from "../middleware/rateLimit";
 import { updateProfileSchema } from "../middleware/validation";
 
 const router = Router();
 
-// All user routes require authentication
+// All user routes require authentication - NO RATE LIMITING
 router.use(authenticate as any);
 
-// Get user profile
-router.get("/profile", generalRateLimit, userController.getProfile);
+// Get user profile - NO RATE LIMITING
+router.get("/profile", userController.getProfile);
 
-// Update user profile
+// Update user profile - NO RATE LIMITING
 router.put(
   "/profile",
-  generalRateLimit,
   validate(updateProfileSchema) as any,
   userController.updateProfile
 );
 
-// Get user statistics
-router.get("/stats", generalRateLimit, userController.getStats);
+// Get user statistics - NO RATE LIMITING
+router.get("/stats", userController.getStats);
 
-// Add credits (for testing or admin purposes)
-router.post("/credits/add", strictRateLimit, userController.addCredits);
+// Add credits (for testing or admin purposes) - NO RATE LIMITING
+router.post("/credits/add", userController.addCredits);
 
-// Upgrade user plan
-router.post("/plan/upgrade", strictRateLimit, userController.upgradePlan);
+// Upgrade user plan - NO RATE LIMITING
+router.post("/plan/upgrade", userController.upgradePlan);
 
-// Verify email
-router.post("/verify-email", generalRateLimit, userController.verifyEmail);
+// Verify email - NO RATE LIMITING
+router.post("/verify-email", userController.verifyEmail);
 
-// Delete user account
-router.delete("/account", strictRateLimit, userController.deleteAccount);
+// Delete user account - NO RATE LIMITING
+router.delete("/account", userController.deleteAccount);
 
 export default router;

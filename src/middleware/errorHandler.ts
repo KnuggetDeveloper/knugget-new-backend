@@ -51,7 +51,7 @@ export class AppError extends Error implements ApiError {
   }
 }
 
-// FIXED: Enhanced Prisma error handling
+// Handle different error types (rate limit error handling removed)
 const handlePrismaError = (
   error: Prisma.PrismaClientKnownRequestError
 ): AppError => {
@@ -158,7 +158,6 @@ const handlePrismaError = (
   }
 };
 
-// FIXED: Enhanced validation error handling
 const handleValidationError = (error: ZodError): AppError => {
   const errors = error.errors.map((err: ZodIssue) => ({
     field: err.path.join("."),
@@ -176,7 +175,6 @@ const handleValidationError = (error: ZodError): AppError => {
   );
 };
 
-// FIXED: JWT error handling
 const handleJWTError = (error: Error): AppError => {
   if (error.name === "JsonWebTokenError") {
     return new AppError(
@@ -217,7 +215,6 @@ const handleJWTError = (error: Error): AppError => {
   );
 };
 
-// FIXED: OpenAI error handling
 const handleOpenAIError = (error: ErrorWithCode): AppError => {
   if (error.code === 'insufficient_quota') {
     return new AppError(
@@ -261,7 +258,6 @@ const handleOpenAIError = (error: ErrorWithCode): AppError => {
     );
   }
 
-  // Generic OpenAI error
   return new AppError(
     "AI service is currently unavailable. Please try again later.",
     503,
@@ -272,7 +268,6 @@ const handleOpenAIError = (error: ErrorWithCode): AppError => {
   );
 };
 
-// FIXED: Network/fetch error handling
 const handleNetworkError = (error: ErrorWithCode): AppError => {
   if (error.code === 'ECONNREFUSED') {
     return new AppError(
@@ -317,19 +312,7 @@ const handleNetworkError = (error: ErrorWithCode): AppError => {
   );
 };
 
-// FIXED: Rate limiting error
-const handleRateLimitError = (error: ErrorWithCode): AppError => {
-  return new AppError(
-    error.message || "Rate limit exceeded",
-    429,
-    true,
-    undefined,
-    'RATE_LIMITED',
-    true
-  );
-};
-
-// FIXED: Comprehensive error handler
+// Comprehensive error handler (rate limit handling removed)
 export const errorHandler = (
   error: Error,
   req: Request,
@@ -370,10 +353,8 @@ export const errorHandler = (
     appError = handleOpenAIError(error as ErrorWithCode);
   } else if ((error as ErrorWithCode).code && ['ECONNREFUSED', 'ENOTFOUND', 'ETIMEDOUT'].includes((error as ErrorWithCode).code!)) {
     appError = handleNetworkError(error as ErrorWithCode);
-  } else if (error.message?.includes('rate limit')) {
-    appError = handleRateLimitError(error as ErrorWithCode);
   } else {
-    // FIXED: Enhanced unhandled error logging
+    // Enhanced unhandled error logging
     logger.error("Unhandled error", {
       error: error.message,
       stack: error.stack,
@@ -402,7 +383,7 @@ export const errorHandler = (
     );
   }
 
-  // FIXED: Enhanced error logging with context
+  // Enhanced error logging with context
   if (appError.isOperational) {
     logger.warn("Operational error", {
       message: appError.message,
@@ -431,7 +412,7 @@ export const errorHandler = (
     });
   }
 
-  // FIXED: Enhanced error response with recovery information
+  // Enhanced error response
   const response: ErrorResponse = {
     success: false,
     error: appError.message,
@@ -452,23 +433,19 @@ export const errorHandler = (
     }
   }
 
-  // FIXED: Add retry information for retryable errors
+  // Add retry information for retryable errors (no rate limit specific logic)
   if (appError.retryable) {
     response.retryAfter = getRetryAfter(appError.statusCode);
     response.maxRetries = 3;
   }
 
-  // FIXED: Handle specific error codes with custom responses
+  // Handle specific error codes with custom responses
   if (appError.code === 'INSUFFICIENT_CREDITS') {
     response.upgradeUrl = `${config.server.apiBaseUrl}/upgrade`;
     response.creditsNeeded = 1;
   }
 
-  if (appError.code === 'RATE_LIMITED') {
-    res.set('Retry-After', getRetryAfter(429).toString());
-  }
-
-  // FIXED: Add correlation ID for error tracking
+  // Add correlation ID for error tracking
   if (req.headers['x-correlation-id']) {
     response.correlationId = req.headers['x-correlation-id'] as string;
   }
@@ -476,7 +453,7 @@ export const errorHandler = (
   res.status(appError.statusCode).json(response);
 };
 
-// FIXED: 404 handler with suggestions
+// 404 handler with suggestions
 export const notFoundHandler = (req: Request, res: Response) => {
   const response: ErrorResponse = {
     success: false,
@@ -497,11 +474,9 @@ export const notFoundHandler = (req: Request, res: Response) => {
   res.status(404).json(response);
 };
 
-// FIXED: Get retry delay based on status code
+// Get retry delay based on status code
 function getRetryAfter(statusCode: number): number {
   switch (statusCode) {
-    case 429: // Rate limited
-      return 60; // 1 minute
     case 503: // Service unavailable
       return 30; // 30 seconds
     case 504: // Gateway timeout
@@ -511,7 +486,7 @@ function getRetryAfter(statusCode: number): number {
   }
 }
 
-// FIXED: Get route suggestions for 404 errors
+// Get route suggestions for 404 errors
 function getSuggestions(url: string): string[] {
   const suggestions: string[] = [];
 
@@ -536,7 +511,7 @@ function getSuggestions(url: string): string[] {
   return suggestions.slice(0, 3); // Limit to 3 suggestions
 }
 
-// FIXED: Simple Levenshtein distance calculation
+// Simple Levenshtein distance calculation
 function levenshteinDistance(str1: string, str2: string): number {
   const matrix = [];
   const n = str2.length;
@@ -570,7 +545,7 @@ function levenshteinDistance(str1: string, str2: string): number {
   return matrix[m][n];
 }
 
-// FIXED: Async error handler wrapper with timeout
+// Async error handler wrapper with timeout
 export const catchAsync = (fn: Function, timeout: number = 30000) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const timeoutId = setTimeout(() => {
@@ -595,7 +570,7 @@ export const catchAsync = (fn: Function, timeout: number = 30000) => {
   };
 };
 
-// FIXED: Health check for error handler
+// Health check for error handler
 export const healthCheck = (req: Request, res: Response) => {
   const response: ApiResponse = {
     success: true,

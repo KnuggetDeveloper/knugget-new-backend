@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { summaryController } from '../controllers/summary';
 import { authenticate, requireCredits } from '../middleware/auth';
 import { validate } from '../middleware/validation';
-import { summaryRateLimit, generalRateLimit } from '../middleware/rateLimit';
 import {
   generateSummarySchema,
   saveSummarySchema,
@@ -12,66 +11,58 @@ import { config } from '../config';
 
 const router = Router();
 
-// All summary routes require authentication
+// All summary routes require authentication - NO RATE LIMITING
 router.use(authenticate as any);
 
-// Generate AI summary from transcript
+// Generate AI summary from transcript - NO RATE LIMITING
 router.post(
   '/generate',
-  summaryRateLimit,
   requireCredits(config.credits.perSummary) as any,
   validate(generateSummarySchema) as any,
   summaryController.generate
 );
 
-// Save summary
+// Save summary - NO RATE LIMITING
 router.post(
   '/save',
-  generalRateLimit,
   validate(saveSummarySchema) as any,
   summaryController.save
 );
 
-// Get user's summaries with pagination and filtering (no validation needed for query params)
+// Get user's summaries with pagination and filtering - NO RATE LIMITING
 router.get(
   '/',
-  generalRateLimit,
   summaryController.getSummaries
 );
 
-// Get summary statistics
+// Get summary statistics - NO RATE LIMITING
 router.get(
   '/stats',
-  generalRateLimit,
   summaryController.getStats
 );
 
-// Get single summary by ID
+// Get single summary by ID - NO RATE LIMITING
 router.get(
   '/:id',
-  generalRateLimit,
   summaryController.getSummaryById
 );
 
-// Update summary
+// Update summary - NO RATE LIMITING
 router.put(
   "/:id",
-  generalRateLimit,
   validate(updateSummarySchema) as any,
   summaryController.updateSummary
 );
 
-// Delete summary
+// Delete summary - NO RATE LIMITING
 router.delete(
   '/:id',
-  generalRateLimit,
   summaryController.deleteSummary
 );
 
-// Get summary by video ID
+// Get summary by video ID - NO RATE LIMITING
 router.get(
   '/video/:videoId',
-  generalRateLimit,
   summaryController.getSummaryByVideoId
 );
 
