@@ -83,7 +83,7 @@ router.get("/", (req, res) => {
 router.use("/auth", authRoutes);
 router.use("/summary", summaryRoutes);
 router.use("/user", userRoutes);
-router.use("/linkedin", linkedinRoutes); // CRITICAL: Make sure this line exists
+router.use("/linkedin", linkedinRoutes); 
 
 // Debug route to check all mounted routes
 router.get("/debug/routes", (req, res) => {

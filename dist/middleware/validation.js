@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validate = exports.summaryQuerySchema = exports.paginationSchema = exports.updateSummarySchema = exports.saveSummarySchema = exports.generateSummarySchema = exports.updateProfileSchema = exports.verifyEmailSchema = exports.resetPasswordSchema = exports.forgotPasswordSchema = exports.refreshTokenSchema = exports.loginSchema = exports.registerSchema = void 0;
+exports.linkedinPostQuerySchema = exports.updateLinkedinPostSchema = exports.saveLinkedinPostSchema = exports.validate = exports.summaryQuerySchema = exports.paginationSchema = exports.updateSummarySchema = exports.saveSummarySchema = exports.generateSummarySchema = exports.updateProfileSchema = exports.verifyEmailSchema = exports.resetPasswordSchema = exports.forgotPasswordSchema = exports.refreshTokenSchema = exports.loginSchema = exports.registerSchema = void 0;
 const zod_1 = require("zod");
 exports.registerSchema = zod_1.z.object({
     body: zod_1.z.object({
@@ -181,4 +181,64 @@ const validate = (schema) => {
     };
 };
 exports.validate = validate;
+exports.saveLinkedinPostSchema = zod_1.z.object({
+    body: zod_1.z.object({
+        title: zod_1.z.string().max(500, "Title too long").optional(),
+        content: zod_1.z.string().min(1, "Content is required").max(10000, "Content too long"),
+        author: zod_1.z.string().min(1, "Author is required").max(200, "Author name too long"),
+        postUrl: zod_1.z.string().url("Invalid post URL"),
+        linkedinPostId: zod_1.z.string().optional(),
+        platform: zod_1.z.string().default("linkedin"),
+        engagement: zod_1.z.object({
+            likes: zod_1.z.number().min(0).optional(),
+            comments: zod_1.z.number().min(0).optional(),
+            shares: zod_1.z.number().min(0).optional(),
+        }).optional(),
+        metadata: zod_1.z.object({
+            timestamp: zod_1.z.string().optional(),
+            source: zod_1.z.string().optional(),
+        }).optional(),
+    }),
+});
+exports.updateLinkedinPostSchema = zod_1.z.object({
+    body: zod_1.z.object({
+        title: zod_1.z.string().max(500, "Title too long").optional(),
+        content: zod_1.z.string().min(1, "Content cannot be empty").max(10000, "Content too long").optional(),
+        author: zod_1.z.string().min(1, "Author cannot be empty").max(200, "Author name too long").optional(),
+        engagement: zod_1.z.object({
+            likes: zod_1.z.number().min(0).optional(),
+            comments: zod_1.z.number().min(0).optional(),
+            shares: zod_1.z.number().min(0).optional(),
+        }).optional(),
+        metadata: zod_1.z.object({
+            timestamp: zod_1.z.string().optional(),
+            source: zod_1.z.string().optional(),
+        }).optional(),
+    }),
+});
+exports.linkedinPostQuerySchema = zod_1.z.object({
+    query: zod_1.z.object({
+        page: zod_1.z
+            .string()
+            .transform(Number)
+            .pipe(zod_1.z.number().int().min(1))
+            .default("1")
+            .optional(),
+        limit: zod_1.z
+            .string()
+            .transform(Number)
+            .pipe(zod_1.z.number().int().min(1).max(100))
+            .default("20")
+            .optional(),
+        search: zod_1.z.string().max(100).optional(),
+        author: zod_1.z.string().max(200).optional(),
+        startDate: zod_1.z.string().datetime().optional(),
+        endDate: zod_1.z.string().datetime().optional(),
+        sortBy: zod_1.z
+            .enum(["savedAt", "createdAt", "author", "title"])
+            .default("savedAt")
+            .optional(),
+        sortOrder: zod_1.z.enum(["asc", "desc"]).default("desc").optional(),
+    }),
+});
 //# sourceMappingURL=validation.js.map

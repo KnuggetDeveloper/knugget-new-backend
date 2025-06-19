@@ -33,9 +33,6 @@ const configSchema = zod_1.z.object({
     ALLOWED_ORIGINS: zod_1.z
         .string()
         .default("http://localhost:8000,https://knugget-new-client.vercel.app,chrome-extension://,https://knugget-new-backend.onrender.com"),
-    RATE_LIMIT_WINDOW_MS: zod_1.z.string().transform(Number).default("900000"),
-    RATE_LIMIT_MAX_REQUESTS_FREE: zod_1.z.string().transform(Number).default("10"),
-    RATE_LIMIT_MAX_REQUESTS_PREMIUM: zod_1.z.string().transform(Number).default("100"),
     LOG_LEVEL: zod_1.z.enum(["error", "warn", "info", "debug"]).default("info"),
     LOG_FILE: zod_1.z.string().default("logs/app.log"),
     CREDITS_PER_SUMMARY: zod_1.z.string().transform(Number).default("1"),
@@ -83,11 +80,6 @@ exports.config = {
     },
     cors: {
         allowedOrigins: parsed.data.ALLOWED_ORIGINS.split(",").map((origin) => origin.trim()),
-    },
-    rateLimit: {
-        windowMs: parsed.data.RATE_LIMIT_WINDOW_MS,
-        maxRequestsFree: parsed.data.RATE_LIMIT_MAX_REQUESTS_FREE,
-        maxRequestsPremium: parsed.data.RATE_LIMIT_MAX_REQUESTS_PREMIUM,
     },
     logging: {
         level: parsed.data.LOG_LEVEL,

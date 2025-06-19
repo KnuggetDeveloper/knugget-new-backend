@@ -95,9 +95,6 @@ const handleNetworkError = (error) => {
     }
     return new AppError("Network error occurred", 503, false, undefined, 'NETWORK_ERROR', true);
 };
-const handleRateLimitError = (error) => {
-    return new AppError(error.message || "Rate limit exceeded", 429, true, undefined, 'RATE_LIMITED', true);
-};
 const errorHandler = (error, req, res, next) => {
     let appError;
     const requestId = req.headers['x-request-id'] || 'unknown';
@@ -124,9 +121,6 @@ const errorHandler = (error, req, res, next) => {
     }
     else if (error.code && ['ECONNREFUSED', 'ENOTFOUND', 'ETIMEDOUT'].includes(error.code)) {
         appError = handleNetworkError(error);
-    }
-    else if (error.message?.includes('rate limit')) {
-        appError = handleRateLimitError(error);
     }
     else {
         logger_1.logger.error("Unhandled error", {
@@ -200,9 +194,6 @@ const errorHandler = (error, req, res, next) => {
         response.upgradeUrl = `${config_1.config.server.apiBaseUrl}/upgrade`;
         response.creditsNeeded = 1;
     }
-    if (appError.code === 'RATE_LIMITED') {
-        res.set('Retry-After', getRetryAfter(429).toString());
-    }
     if (req.headers['x-correlation-id']) {
         response.correlationId = req.headers['x-correlation-id'];
     }
@@ -229,8 +220,6 @@ const notFoundHandler = (req, res) => {
 exports.notFoundHandler = notFoundHandler;
 function getRetryAfter(statusCode) {
     switch (statusCode) {
-        case 429:
-            return 60;
         case 503:
             return 30;
         case 504:
