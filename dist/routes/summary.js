@@ -8,7 +8,7 @@ const validation_2 = require("../middleware/validation");
 const config_1 = require("../config");
 const router = (0, express_1.Router)();
 router.use(auth_1.authenticate);
-router.post('/generate', (0, auth_1.requireCredits)(config_1.config.credits.perSummary), (0, validation_1.validate)(validation_2.generateSummarySchema), summary_1.summaryController.generate);
+router.post('/generate', (0, auth_1.requireCredits)(config_1.config.credits.perSummary), summary_1.summaryController.generate);
 router.post('/save', (0, validation_1.validate)(validation_2.saveSummarySchema), summary_1.summaryController.save);
 router.get('/', summary_1.summaryController.getSummaries);
 router.get('/stats', summary_1.summaryController.getStats);

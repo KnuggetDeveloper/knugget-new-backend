@@ -10,66 +10,121 @@ class SummaryController {
             if (!req.user) {
                 const response = {
                     success: false,
-                    error: 'User not authenticated',
+                    error: "User not authenticated",
                 };
                 return res.status(401).json(response);
             }
-            const { transcript, videoMetadata } = req.body;
-            const result = await summary_1.summaryService.generateSummary(req.user.id, {
-                transcript,
-                videoMetadata,
-            });
-            const response = {
-                success: true,
-                data: result.data,
-                message: 'Summary generated successfully',
-            };
-            logger_1.logger.info('Summary generated', {
-                userId: req.user.id,
-                videoId: videoMetadata.videoId,
-                summaryId: result.data?.id,
-            });
-            res.json(response);
+            let transcript, videoMetadata;
+            if (req.body.transcript && req.body.videoMetadata) {
+                transcript = req.body.transcript;
+                videoMetadata = req.body.videoMetadata;
+            }
+            else {
+                transcript = req.body.transcript;
+                videoMetadata = req.body.videoMetadata;
+            }
+            if (!transcript || !videoMetadata) {
+                const response = {
+                    success: false,
+                    error: "Missing transcript or video metadata",
+                };
+                return res.status(400).json(response);
+            }
+            try {
+                const result = await summary_1.summaryService.generateSummary(req.user.id, {
+                    transcript,
+                    videoMetadata,
+                });
+                const response = {
+                    success: true,
+                    data: result.data,
+                    message: "Summary generated successfully",
+                };
+                logger_1.logger.info("Summary generated", {
+                    userId: req.user.id,
+                    videoId: videoMetadata.videoId,
+                    summaryId: result.data?.id,
+                });
+                res.json(response);
+            }
+            catch (error) {
+                logger_1.logger.error("Summary generation failed", {
+                    error: error instanceof Error ? error.message : "Unknown error",
+                    userId: req.user.id,
+                    videoId: videoMetadata?.videoId,
+                });
+                const response = {
+                    success: false,
+                    error: error instanceof Error ? error.message : "Failed to generate summary",
+                };
+                res.status(500).json(response);
+            }
         });
         this.save = (0, errorHandler_1.catchAsync)(async (req, res) => {
             if (!req.user) {
                 const response = {
                     success: false,
-                    error: 'User not authenticated',
+                    error: "User not authenticated",
                 };
                 return res.status(401).json(response);
             }
-            const summaryData = req.body;
-            const result = await summary_1.summaryService.saveSummary(req.user.id, summaryData);
-            const response = {
-                success: true,
-                data: result.data,
-                message: 'Summary saved successfully',
-            };
-            logger_1.logger.info('Summary saved', {
-                userId: req.user.id,
-                summaryId: result.data?.id,
-            });
-            res.json(response);
+            try {
+                const summaryData = req.body;
+                if (!summaryData.title || !summaryData.fullSummary) {
+                    const response = {
+                        success: false,
+                        error: "Missing required summary data",
+                    };
+                    return res.status(400).json(response);
+                }
+                const result = await summary_1.summaryService.saveSummary(req.user.id, summaryData);
+                const response = {
+                    success: true,
+                    data: result.data,
+                    message: "Summary saved successfully",
+                };
+                logger_1.logger.info("Summary saved", {
+                    userId: req.user.id,
+                    summaryId: result.data?.id,
+                });
+                res.json(response);
+            }
+            catch (error) {
+                logger_1.logger.error("Summary save failed", {
+                    error: error instanceof Error ? error.message : "Unknown error",
+                    userId: req.user.id,
+                });
+                const response = {
+                    success: false,
+                    error: error instanceof Error ? error.message : "Failed to save summary",
+                };
+                res.status(500).json(response);
+            }
         });
         this.getSummaries = (0, errorHandler_1.catchAsync)(async (req, res) => {
             if (!req.user) {
                 const response = {
                     success: false,
-                    error: 'User not authenticated',
+                    error: "User not authenticated",
                 };
                 return res.status(401).json(response);
             }
             const queryParams = {
-                page: req.query.page ? Math.max(1, parseInt(req.query.page) || 1) : 1,
-                limit: req.query.limit ? Math.min(100, Math.max(1, parseInt(req.query.limit) || 20)) : 20,
+                page: req.query.page
+                    ? Math.max(1, parseInt(req.query.page) || 1)
+                    : 1,
+                limit: req.query.limit
+                    ? Math.min(100, Math.max(1, parseInt(req.query.limit) || 20))
+                    : 20,
                 search: req.query.search ? String(req.query.search) : undefined,
                 status: req.query.status || undefined,
                 videoId: req.query.videoId ? String(req.query.videoId) : undefined,
-                startDate: req.query.startDate ? String(req.query.startDate) : undefined,
+                startDate: req.query.startDate
+                    ? String(req.query.startDate)
+                    : undefined,
                 endDate: req.query.endDate ? String(req.query.endDate) : undefined,
-                sortBy: req.query.sortBy || 'createdAt',
-                sortOrder: req.query.sortOrder || 'desc',
+                sortBy: req.query.sortBy || "createdAt",
+                sortOrder: req.query.sortOrder || "desc",
             };
             const result = await summary_1.summaryService.getSummaries(req.user.id, queryParams);
             const response = {
@@ -82,7 +137,7 @@ class SummaryController {
             if (!req.user) {
                 const response = {
                     success: false,
-                    error: 'User not authenticated',
+                    error: "User not authenticated",
                 };
                 return res.status(401).json(response);
             }
@@ -98,7 +153,7 @@ class SummaryController {
             if (!req.user) {
                 const response = {
                     success: false,
-                    error: 'User not authenticated',
+                    error: "User not authenticated",
                 };
                 return res.status(401).json(response);
             }
@@ -108,9 +163,9 @@ class SummaryController {
             const response = {
                 success: true,
                 data: result.data,
-                message: 'Summary updated successfully',
+                message: "Summary updated successfully",
             };
-            logger_1.logger.info('Summary updated', {
+            logger_1.logger.info("Summary updated", {
                 userId: req.user.id,
                 summaryId: id,
                 updates: Object.keys(updates),
@@ -121,7 +176,7 @@ class SummaryController {
             if (!req.user) {
                 const response = {
                     success: false,
-                    error: 'User not authenticated',
+                    error: "User not authenticated",
                 };
                 return res.status(401).json(response);
             }
@@ -129,9 +184,9 @@ class SummaryController {
             await summary_1.summaryService.deleteSummary(req.user.id, id);
             const response = {
                 success: true,
-                message: 'Summary deleted successfully',
+                message: "Summary deleted successfully",
             };
-            logger_1.logger.info('Summary deleted', {
+            logger_1.logger.info("Summary deleted", {
                 userId: req.user.id,
                 summaryId: id,
             });
@@ -141,7 +196,7 @@ class SummaryController {
             if (!req.user) {
                 const response = {
                     success: false,
-                    error: 'User not authenticated',
+                    error: "User not authenticated",
                 };
                 return res.status(401).json(response);
             }
@@ -157,7 +212,7 @@ class SummaryController {
             if (!req.user) {
                 const response = {
                     success: false,
-                    error: 'User not authenticated',
+                    error: "User not authenticated",
                 };
                 return res.status(401).json(response);
             }

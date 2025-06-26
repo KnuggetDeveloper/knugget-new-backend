@@ -38,38 +38,42 @@ export class OpenAIService {
         model: config.openai.model,
         messages: [
           {
-            role: 'system',
-            content: 'You are an AI assistant specialized in creating concise, insightful summaries of YouTube videos. You extract key points, themes, and actionable insights from video transcripts.'
+            role: "system",
+            content:
+              "You are an AI assistant specialized in creating concise, insightful summaries of YouTube videos. You extract key points, themes, and actionable insights from video transcripts.",
           },
           {
-            role: 'user',
-            content: prompt
-          }
+            role: "user",
+            content: prompt,
+          },
         ],
         max_tokens: config.openai.maxTokens,
         temperature: 0.3,
-        response_format: { type: 'json_object' }
+        response_format: { type: "json_object" },
       });
 
       const responseText = completion.choices[0]?.message?.content;
       if (!responseText) {
-        throw new AppError('Empty response from OpenAI', 500);
+        throw new AppError("Empty response from OpenAI", 500);
       }
 
       let summaryData: OpenAISummaryResponse;
       try {
         summaryData = JSON.parse(responseText);
       } catch (parseError) {
-        logger.error('Failed to parse OpenAI response', { responseText, parseError });
-        throw new AppError('Invalid response format from AI', 500);
+        logger.error("Failed to parse OpenAI response", {
+          responseText,
+          parseError,
+        });
+        throw new AppError("Invalid response format from AI", 500);
       }
 
       // Validate response structure
       if (!this.validateSummaryResponse(summaryData)) {
-        throw new AppError('Invalid summary response structure', 500);
+        throw new AppError("Invalid summary response structure", 500);
       }
 
-      logger.info('Summary generated successfully', {
+      logger.info("Summary generated successfully", {
         videoId: videoMetadata.videoId,
         keyPointsCount: summaryData.keyPoints.length,
         tagsCount: summaryData.tags.length,
@@ -78,8 +82,8 @@ export class OpenAIService {
 
       return { success: true, data: summaryData };
     } catch (error: unknown) {
-      logger.error('Summary generation failed', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+      logger.error("Summary generation failed", {
+        error: error instanceof Error ? error.message : "Unknown error",
         videoId: videoMetadata.videoId,
         transcriptLength: transcript.length,
       });
@@ -89,15 +93,21 @@ export class OpenAIService {
       }
 
       // Handle OpenAI specific errors
-      if (error instanceof OpenAI.APIError && error.code === 'insufficient_quota') {
-        throw new AppError('AI service quota exceeded', 503);
+      if (
+        error instanceof OpenAI.APIError &&
+        error.code === "insufficient_quota"
+      ) {
+        throw new AppError("AI service quota exceeded", 503);
       }
 
-      if (error instanceof OpenAI.APIError && error.code === 'rate_limit_exceeded') {
-        throw new AppError('AI service rate limit exceeded', 429);
+      if (
+        error instanceof OpenAI.APIError &&
+        error.code === "rate_limit_exceeded"
+      ) {
+        throw new AppError("AI service rate limit exceeded", 429);
       }
 
-      throw new AppError('Summary generation failed', 500);
+      throw new AppError("Summary generation failed", 500);
     }
   }
 
@@ -113,19 +123,24 @@ export class OpenAIService {
       // Process each chunk
       for (let i = 0; i < chunks.length; i++) {
         const chunkText = this.formatTranscriptForAI(chunks[i]);
-        const chunkPrompt = this.createChunkSummaryPrompt(chunkText, i + 1, chunks.length);
+        const chunkPrompt = this.createChunkSummaryPrompt(
+          chunkText,
+          i + 1,
+          chunks.length
+        );
 
         const completion = await this.client.chat.completions.create({
           model: config.openai.model,
           messages: [
             {
-              role: 'system',
-              content: 'You are an AI assistant that creates concise summaries of video transcript chunks.'
+              role: "system",
+              content:
+                "You are an AI assistant that creates concise summaries of video transcript chunks.",
             },
             {
-              role: 'user',
-              content: chunkPrompt
-            }
+              role: "user",
+              content: chunkPrompt,
+            },
           ],
           max_tokens: 500,
           temperature: 0.3,
@@ -138,43 +153,47 @@ export class OpenAIService {
 
         // Add delay to avoid rate limiting
         if (i < chunks.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       }
 
       // Combine chunk summaries into final summary
-      const combinedSummary = chunkSummaries.join('\n\n');
-      const finalPrompt = this.createFinalSummaryPrompt(combinedSummary, videoMetadata);
+      const combinedSummary = chunkSummaries.join("\n\n");
+      const finalPrompt = this.createFinalSummaryPrompt(
+        combinedSummary,
+        videoMetadata
+      );
 
       const finalCompletion = await this.client.chat.completions.create({
         model: config.openai.model,
         messages: [
           {
-            role: 'system',
-            content: 'You are an AI assistant that creates final summaries from multiple text chunks, extracting key points and themes.'
+            role: "system",
+            content:
+              "You are an AI assistant that creates final summaries from multiple text chunks, extracting key points and themes.",
           },
           {
-            role: 'user',
-            content: finalPrompt
-          }
+            role: "user",
+            content: finalPrompt,
+          },
         ],
         max_tokens: config.openai.maxTokens,
         temperature: 0.3,
-        response_format: { type: 'json_object' }
+        response_format: { type: "json_object" },
       });
 
       const finalResponseText = finalCompletion.choices[0]?.message?.content;
       if (!finalResponseText) {
-        throw new AppError('Empty response from OpenAI', 500);
+        throw new AppError("Empty response from OpenAI", 500);
       }
 
       const summaryData: OpenAISummaryResponse = JSON.parse(finalResponseText);
 
       if (!this.validateSummaryResponse(summaryData)) {
-        throw new AppError('Invalid summary response structure', 500);
+        throw new AppError("Invalid summary response structure", 500);
       }
 
-      logger.info('Chunked summary generated successfully', {
+      logger.info("Chunked summary generated successfully", {
         videoId: videoMetadata.videoId,
         chunksProcessed: chunks.length,
         keyPointsCount: summaryData.keyPoints.length,
@@ -182,13 +201,20 @@ export class OpenAIService {
 
       return { success: true, data: summaryData };
     } catch (error) {
-      logger.error('Chunked summary generation failed', { error, videoId: videoMetadata.videoId });
-      throw error instanceof AppError ? error : new AppError('Summary generation failed', 500);
+      logger.error("Chunked summary generation failed", {
+        error,
+        videoId: videoMetadata.videoId,
+      });
+      throw error instanceof AppError
+        ? error
+        : new AppError("Summary generation failed", 500);
     }
   }
 
   // Chunk transcript into manageable pieces
-  private chunkTranscript(transcript: TranscriptSegment[]): TranscriptSegment[][] {
+  private chunkTranscript(
+    transcript: TranscriptSegment[]
+  ): TranscriptSegment[][] {
     const chunks: TranscriptSegment[][] = [];
     const maxChunkLength = Math.floor(MAX_TRANSCRIPT_LENGTH / 3); // Conservative chunking
 
@@ -198,7 +224,10 @@ export class OpenAIService {
     for (const segment of transcript) {
       const segmentLength = segment.text.length;
 
-      if (currentLength + segmentLength > maxChunkLength && currentChunk.length > 0) {
+      if (
+        currentLength + segmentLength > maxChunkLength &&
+        currentChunk.length > 0
+      ) {
         chunks.push([...currentChunk]);
         currentChunk = [segment];
         currentLength = segmentLength;
@@ -218,18 +247,21 @@ export class OpenAIService {
   // Format transcript segments for AI processing
   private formatTranscriptForAI(transcript: TranscriptSegment[]): string {
     return transcript
-      .map(segment => `[${segment.timestamp}] ${segment.text}`)
-      .join('\n');
+      .map((segment) => `[${segment.timestamp}] ${segment.text}`)
+      .join("\n");
   }
 
   // Create main summary prompt
-  private createSummaryPrompt(transcriptText: string, videoMetadata: VideoMetadata): string {
+  private createSummaryPrompt(
+    transcriptText: string,
+    videoMetadata: VideoMetadata
+  ): string {
     return `
 Please analyze this YouTube video transcript and create a comprehensive summary.
 
 Video Title: "${videoMetadata.title}"
 Channel: ${videoMetadata.channelName}
-Duration: ${videoMetadata.duration || 'Unknown'}
+Duration: ${videoMetadata.duration || "Unknown"}
 
 Transcript:
 ${transcriptText}
@@ -264,7 +296,11 @@ Guidelines:
   }
 
   // Create chunk summary prompt
-  private createChunkSummaryPrompt(chunkText: string, chunkNumber: number, totalChunks: number): string {
+  private createChunkSummaryPrompt(
+    chunkText: string,
+    chunkNumber: number,
+    totalChunks: number
+  ): string {
     return `
 This is chunk ${chunkNumber} of ${totalChunks} from a YouTube video transcript.
 
@@ -281,7 +317,10 @@ Keep the summary to 2-3 sentences maximum.
   }
 
   // Create final summary prompt for chunked content
-  private createFinalSummaryPrompt(combinedSummary: string, videoMetadata: VideoMetadata): string {
+  private createFinalSummaryPrompt(
+    combinedSummary: string,
+    videoMetadata: VideoMetadata
+  ): string {
     return `
 Please create a comprehensive summary from these chunk summaries of a YouTube video.
 
@@ -319,16 +358,18 @@ Guidelines:
   }
 
   // Validate AI response structure
-  private validateSummaryResponse(response: any): response is OpenAISummaryResponse {
+  private validateSummaryResponse(
+    response: any
+  ): response is OpenAISummaryResponse {
     return (
       response &&
       Array.isArray(response.keyPoints) &&
       response.keyPoints.length > 0 &&
-      response.keyPoints.every((point: any) => typeof point === 'string') &&
-      typeof response.fullSummary === 'string' &&
+      response.keyPoints.every((point: any) => typeof point === "string") &&
+      typeof response.fullSummary === "string" &&
       response.fullSummary.length > 0 &&
       Array.isArray(response.tags) &&
-      response.tags.every((tag: any) => typeof tag === 'string')
+      response.tags.every((tag: any) => typeof tag === "string")
     );
   }
 
@@ -336,8 +377,8 @@ Guidelines:
   async testConnection(): Promise<ServiceResponse<boolean>> {
     try {
       const completion = await this.client.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: 'Hello' }],
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: "Hello" }],
         max_tokens: 5,
       });
 
@@ -345,8 +386,8 @@ Guidelines:
 
       return { success: true, data: hasResponse };
     } catch (error) {
-      logger.error('OpenAI connection test failed', { error });
-      return { success: false, error: 'OpenAI connection failed' };
+      logger.error("OpenAI connection test failed", { error });
+      return { success: false, error: "OpenAI connection failed" };
     }
   }
 }
