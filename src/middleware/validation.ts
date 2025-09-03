@@ -267,3 +267,74 @@ export const linkedinPostQuerySchema = z.object({
     sortOrder: z.enum(["asc", "desc"]).default("desc").optional(),
   }),
 });
+
+export const createWebsiteSummarySchema = z.object({
+  body: z.object({
+    title: z
+      .string()
+      .min(1, "Title is required")
+      .max(500, "Title too long")
+      .trim(),
+    content: z
+      .string()
+      .min(100, "Content too short. Minimum 100 characters required for meaningful summarization.")
+      .max(100000, "Content too long. Maximum 100,000 characters allowed.")
+      .trim(),
+    url: z
+      .string()
+      .url("Invalid URL format")
+      .max(2000, "URL too long"),
+  }),
+});
+
+export const getWebsiteSummarySchema = z.object({
+  query: z.object({
+    url: z
+      .string()
+      .url("Invalid URL format")
+      .max(2000, "URL too long"),
+  }),
+});
+
+// URL validation helper
+export const validateWebsiteUrl = (url: string): boolean => {
+  try {
+    const urlObj = new URL(url);
+    
+    // Only allow HTTP and HTTPS protocols
+    if (!['http:', 'https:'].includes(urlObj.protocol)) {
+      return false;
+    }
+    
+    // Block localhost and private IP ranges for security
+    const hostname = urlObj.hostname.toLowerCase();
+    if (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('10.') ||
+      hostname.startsWith('172.16.') ||
+      hostname.startsWith('172.17.') ||
+      hostname.startsWith('172.18.') ||
+      hostname.startsWith('172.19.') ||
+      hostname.startsWith('172.20.') ||
+      hostname.startsWith('172.21.') ||
+      hostname.startsWith('172.22.') ||
+      hostname.startsWith('172.23.') ||
+      hostname.startsWith('172.24.') ||
+      hostname.startsWith('172.25.') ||
+      hostname.startsWith('172.26.') ||
+      hostname.startsWith('172.27.') ||
+      hostname.startsWith('172.28.') ||
+      hostname.startsWith('172.29.') ||
+      hostname.startsWith('172.30.') ||
+      hostname.startsWith('172.31.')
+    ) {
+      return false;
+    }
+    
+    return true;
+  } catch {
+    return false;
+  }
+};

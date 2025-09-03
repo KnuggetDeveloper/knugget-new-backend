@@ -111,7 +111,11 @@ class UserService {
                     credits: true,
                     createdAt: true,
                     _count: {
-                        select: { summaries: true },
+                        select: {
+                            summaries: true,
+                            linkedinPosts: true,
+                            websiteSummaries: true,
+                        },
                     },
                 },
             });
@@ -120,20 +124,38 @@ class UserService {
             }
             const now = new Date();
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            const summariesThisMonth = await database_1.prisma.summary.count({
-                where: {
-                    userId,
-                    createdAt: { gte: startOfMonth },
-                    status: "COMPLETED",
-                },
-            });
+            const [summariesThisMonth, linkedinPostsThisMonth, websiteSummariesThisMonth,] = await Promise.all([
+                database_1.prisma.summary.count({
+                    where: {
+                        userId,
+                        createdAt: { gte: startOfMonth },
+                        status: "COMPLETED",
+                    },
+                }),
+                database_1.prisma.linkedinPost.count({
+                    where: {
+                        userId,
+                        createdAt: { gte: startOfMonth },
+                    },
+                }),
+                database_1.prisma.websiteSummary.count({
+                    where: {
+                        userId,
+                        createdAt: { gte: startOfMonth },
+                    },
+                }),
+            ]);
             const maxCredits = user.plan === "PREMIUM"
                 ? config_1.config.credits.premiumMonthly
                 : config_1.config.credits.freeMonthly;
             const creditsUsed = Math.max(0, maxCredits - user.credits);
             const stats = {
                 totalSummaries: user._count.summaries,
+                totalLinkedinPosts: user._count.linkedinPosts,
+                totalWebsiteSummaries: user._count.websiteSummaries,
                 summariesThisMonth,
+                linkedinPostsThisMonth,
+                websiteSummariesThisMonth,
                 creditsUsed,
                 creditsRemaining: user.credits,
                 planStatus: user.plan,

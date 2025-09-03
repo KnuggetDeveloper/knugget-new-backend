@@ -1,5 +1,6 @@
 import { Request } from "express";
 import { User, UserPlan, SummaryStatus } from "@prisma/client";
+export { WebsiteSummary } from "@prisma/client";
 
 // API Response Types
 export interface ApiResponse<T = any> {
@@ -118,7 +119,11 @@ export interface UserProfile {
 
 export interface UserStats {
   totalSummaries: number;
+  totalLinkedinPosts: number;
+  totalWebsiteSummaries: number; 
   summariesThisMonth: number;
+  linkedinPostsThisMonth: number;
+  websiteSummariesThisMonth: number;
   creditsUsed: number;
   creditsRemaining: number;
   planStatus: UserPlan;
@@ -340,4 +345,37 @@ export interface LinkedinPostStats {
     author: string;
     savedAt: string;
   }>;
+}
+
+
+//Website
+export interface WebsiteSummaryData {
+  id: string;
+  title: string;
+  content: string;
+  summary: string;
+  url: string;
+  websiteName: string;
+  faviconUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateWebsiteSummaryDto {
+  title: string;
+  content: string;
+  url: string;
+}
+
+export interface WebsiteSummaryResponse {
+  id: string;
+  title: string;
+  content: string;
+  summary: string;
+  url: string;
+  websiteName: string;
+  faviconUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+  isNew: boolean; // Indicates if this was freshly created or retrieved from DB
 }

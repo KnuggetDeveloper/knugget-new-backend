@@ -39,10 +39,10 @@ model User {
   // Email verification
   emailVerified Boolean @default(false)
 
-  // Relations
-  summaries     Summary[]
-  refreshTokens RefreshToken[]
-  linkedinPosts LinkedinPost[]
+  summaries        Summary[]
+  refreshTokens    RefreshToken[]
+  linkedinPosts    LinkedinPost[]
+  websiteSummaries WebsiteSummary[]
 
   @@map("users")
 }
@@ -96,18 +96,15 @@ model Summary {
   @@map("summaries")
 }
 
-model LinkedinPost {
-  id              String   @id @default(cuid())
-  title           String?
-  content         String
-  author          String
-  postUrl         String
-  linkedinPostId  String?
-  platform        String   @default("linkedin")
-  engagement      Json?    // Store likes, comments, shares
-  metadata        Json?    // Store additional metadata
-  savedAt         DateTime @default(now())
-  
+model WebsiteSummary {
+  id          String   @id @default(cuid())
+  title       String
+  content     String   @db.Text // Store full article content
+  summary     String   @db.Text // AI-generated summary
+  url         String
+  websiteName String   // e.g., "Medium", "Dev.to"
+  faviconUrl  String?  // Optional favicon URL
+
   // User relation
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -116,11 +113,38 @@ model LinkedinPost {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Indexes for performance
+  @@index([userId])
+  @@index([url])
+  @@unique([userId, url]) // Prevent duplicate summaries for same URL by same user
+  @@map("website_summaries")
+}
+
+model LinkedinPost {
+  id             String   @id @default(cuid())
+  title          String?
+  content        String
+  author         String
+  postUrl        String
+  linkedinPostId String?
+  platform       String   @default("linkedin")
+  engagement     Json? // Store likes, comments, shares
+  metadata       Json? // Store additional metadata
+  savedAt        DateTime @default(now())
+
+  // User relation
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, postUrl]) // Prevent duplicate saves
   // Indexes
   @@index([userId])
   @@index([savedAt])
   @@index([platform])
-  @@unique([userId, postUrl]) // Prevent duplicate saves
   @@map("linkedin_posts")
 }
 

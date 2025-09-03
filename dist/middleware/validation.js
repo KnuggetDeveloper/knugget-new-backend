@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.linkedinPostQuerySchema = exports.updateLinkedinPostSchema = exports.saveLinkedinPostSchema = exports.validate = exports.summaryQuerySchema = exports.paginationSchema = exports.updateSummarySchema = exports.saveSummarySchema = exports.generateSummarySchema = exports.updateProfileSchema = exports.verifyEmailSchema = exports.resetPasswordSchema = exports.forgotPasswordSchema = exports.refreshTokenSchema = exports.loginSchema = exports.registerSchema = void 0;
+exports.validateWebsiteUrl = exports.getWebsiteSummarySchema = exports.createWebsiteSummarySchema = exports.linkedinPostQuerySchema = exports.updateLinkedinPostSchema = exports.saveLinkedinPostSchema = exports.validate = exports.summaryQuerySchema = exports.paginationSchema = exports.updateSummarySchema = exports.saveSummarySchema = exports.generateSummarySchema = exports.updateProfileSchema = exports.verifyEmailSchema = exports.resetPasswordSchema = exports.forgotPasswordSchema = exports.refreshTokenSchema = exports.loginSchema = exports.registerSchema = void 0;
 const zod_1 = require("zod");
 exports.registerSchema = zod_1.z.object({
     body: zod_1.z.object({
@@ -241,4 +241,66 @@ exports.linkedinPostQuerySchema = zod_1.z.object({
         sortOrder: zod_1.z.enum(["asc", "desc"]).default("desc").optional(),
     }),
 });
+exports.createWebsiteSummarySchema = zod_1.z.object({
+    body: zod_1.z.object({
+        title: zod_1.z
+            .string()
+            .min(1, "Title is required")
+            .max(500, "Title too long")
+            .trim(),
+        content: zod_1.z
+            .string()
+            .min(100, "Content too short. Minimum 100 characters required for meaningful summarization.")
+            .max(100000, "Content too long. Maximum 100,000 characters allowed.")
+            .trim(),
+        url: zod_1.z
+            .string()
+            .url("Invalid URL format")
+            .max(2000, "URL too long"),
+    }),
+});
+exports.getWebsiteSummarySchema = zod_1.z.object({
+    query: zod_1.z.object({
+        url: zod_1.z
+            .string()
+            .url("Invalid URL format")
+            .max(2000, "URL too long"),
+    }),
+});
+const validateWebsiteUrl = (url) => {
+    try {
+        const urlObj = new URL(url);
+        if (!['http:', 'https:'].includes(urlObj.protocol)) {
+            return false;
+        }
+        const hostname = urlObj.hostname.toLowerCase();
+        if (hostname === 'localhost' ||
+            hostname === '127.0.0.1' ||
+            hostname.startsWith('192.168.') ||
+            hostname.startsWith('10.') ||
+            hostname.startsWith('172.16.') ||
+            hostname.startsWith('172.17.') ||
+            hostname.startsWith('172.18.') ||
+            hostname.startsWith('172.19.') ||
+            hostname.startsWith('172.20.') ||
+            hostname.startsWith('172.21.') ||
+            hostname.startsWith('172.22.') ||
+            hostname.startsWith('172.23.') ||
+            hostname.startsWith('172.24.') ||
+            hostname.startsWith('172.25.') ||
+            hostname.startsWith('172.26.') ||
+            hostname.startsWith('172.27.') ||
+            hostname.startsWith('172.28.') ||
+            hostname.startsWith('172.29.') ||
+            hostname.startsWith('172.30.') ||
+            hostname.startsWith('172.31.')) {
+            return false;
+        }
+        return true;
+    }
+    catch {
+        return false;
+    }
+};
+exports.validateWebsiteUrl = validateWebsiteUrl;
 //# sourceMappingURL=validation.js.map

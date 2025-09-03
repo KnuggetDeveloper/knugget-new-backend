@@ -130,7 +130,11 @@ export class UserService {
           credits: true,
           createdAt: true,
           _count: {
-            select: { summaries: true },
+            select: {
+              summaries: true,
+              linkedinPosts: true,
+              websiteSummaries: true, // ADD THIS LINE
+            },
           },
         },
       });
@@ -139,17 +143,36 @@ export class UserService {
         throw new AppError("User not found", 404);
       }
 
-      // Get summaries this month
+      // Get summaries this month for all content types
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      const summariesThisMonth = await prisma.summary.count({
-        where: {
-          userId,
-          createdAt: { gte: startOfMonth },
-          status: "COMPLETED",
-        },
-      });
+      const [
+        summariesThisMonth,
+        linkedinPostsThisMonth,
+        websiteSummariesThisMonth, // ADD THIS
+      ] = await Promise.all([
+        prisma.summary.count({
+          where: {
+            userId,
+            createdAt: { gte: startOfMonth },
+            status: "COMPLETED",
+          },
+        }),
+        prisma.linkedinPost.count({
+          where: {
+            userId,
+            createdAt: { gte: startOfMonth },
+          },
+        }),
+        // ADD THIS QUERY
+        prisma.websiteSummary.count({
+          where: {
+            userId,
+            createdAt: { gte: startOfMonth },
+          },
+        }),
+      ]);
 
       // Calculate credits used (assuming user started with max credits)
       const maxCredits =
@@ -161,7 +184,11 @@ export class UserService {
 
       const stats: UserStats = {
         totalSummaries: user._count.summaries,
+        totalLinkedinPosts: user._count.linkedinPosts,
+        totalWebsiteSummaries: user._count.websiteSummaries, // ADD THIS
         summariesThisMonth,
+        linkedinPostsThisMonth,
+        websiteSummariesThisMonth, // ADD THIS
         creditsUsed,
         creditsRemaining: user.credits,
         planStatus: user.plan,

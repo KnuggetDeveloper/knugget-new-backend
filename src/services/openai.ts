@@ -10,6 +10,25 @@ import {
   MAX_TRANSCRIPT_LENGTH,
 } from "../types";
 
+interface OpenAICompletionRequest {
+  messages: Array<{
+    role: "system" | "user" | "assistant";
+    content: string;
+  }>;
+  maxTokens?: number;
+  temperature?: number;
+  model?: string;
+}
+
+interface OpenAICompletionResponse {
+  trim(): string | undefined;
+  content: string;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
 export class OpenAIService {
   private client: OpenAI;
 
@@ -388,6 +407,73 @@ Guidelines:
     } catch (error) {
       logger.error("OpenAI connection test failed", { error });
       return { success: false, error: "OpenAI connection failed" };
+    }
+  }
+
+  async generateCompletion(
+    request: OpenAICompletionRequest
+  ): Promise<ServiceResponse<OpenAICompletionResponse>> {
+    try {
+      const completion = await this.client.chat.completions.create({
+        model: request.model || config.openai.model,
+        messages: request.messages,
+        max_tokens: request.maxTokens || 500,
+        temperature: request.temperature || 0.3,
+      });
+
+      const responseContent = completion.choices[0]?.message?.content;
+      if (!responseContent) {
+        throw new AppError("Empty response from OpenAI", 500);
+      }
+
+      const response: OpenAICompletionResponse = {
+        content: responseContent,
+        usage: completion.usage
+          ? {
+            prompt_tokens: completion.usage.prompt_tokens,
+            completion_tokens: completion.usage.completion_tokens,
+            total_tokens: completion.usage.total_tokens,
+          }
+          : undefined,
+        trim: function (): string | undefined {
+          throw new Error("Function not implemented.");
+        }
+      };
+
+      logger.info("OpenAI completion generated successfully", {
+        model: request.model || config.openai.model,
+        prompt_tokens: completion.usage?.prompt_tokens,
+        completion_tokens: completion.usage?.completion_tokens,
+        total_tokens: completion.usage?.total_tokens,
+      });
+
+      return { success: true, data: response };
+    } catch (error: unknown) {
+      logger.error("OpenAI completion generation failed", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        model: request.model || config.openai.model,
+        maxTokens: request.maxTokens,
+        temperature: request.temperature,
+      });
+
+      if (error instanceof AppError) {
+        throw error;
+      }
+
+      // Handle OpenAI specific errors
+      if (error instanceof OpenAI.APIError) {
+        if (error.code === "insufficient_quota") {
+          throw new AppError("AI service quota exceeded", 503);
+        }
+        if (error.code === "rate_limit_exceeded") {
+          throw new AppError("AI service rate limit exceeded", 429);
+        }
+        if (error.code === "context_length_exceeded") {
+          throw new AppError("Content too long for AI processing", 413);
+        }
+      }
+
+      throw new AppError("OpenAI completion generation failed", 500);
     }
   }
 }

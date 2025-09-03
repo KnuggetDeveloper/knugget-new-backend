@@ -300,6 +300,63 @@ Guidelines:
             return { success: false, error: "OpenAI connection failed" };
         }
     }
+    async generateCompletion(request) {
+        try {
+            const completion = await this.client.chat.completions.create({
+                model: request.model || config_1.config.openai.model,
+                messages: request.messages,
+                max_tokens: request.maxTokens || 500,
+                temperature: request.temperature || 0.3,
+            });
+            const responseContent = completion.choices[0]?.message?.content;
+            if (!responseContent) {
+                throw new errorHandler_1.AppError("Empty response from OpenAI", 500);
+            }
+            const response = {
+                content: responseContent,
+                usage: completion.usage
+                    ? {
+                        prompt_tokens: completion.usage.prompt_tokens,
+                        completion_tokens: completion.usage.completion_tokens,
+                        total_tokens: completion.usage.total_tokens,
+                    }
+                    : undefined,
+                trim: function () {
+                    throw new Error("Function not implemented.");
+                }
+            };
+            logger_1.logger.info("OpenAI completion generated successfully", {
+                model: request.model || config_1.config.openai.model,
+                prompt_tokens: completion.usage?.prompt_tokens,
+                completion_tokens: completion.usage?.completion_tokens,
+                total_tokens: completion.usage?.total_tokens,
+            });
+            return { success: true, data: response };
+        }
+        catch (error) {
+            logger_1.logger.error("OpenAI completion generation failed", {
+                error: error instanceof Error ? error.message : "Unknown error",
+                model: request.model || config_1.config.openai.model,
+                maxTokens: request.maxTokens,
+                temperature: request.temperature,
+            });
+            if (error instanceof errorHandler_1.AppError) {
+                throw error;
+            }
+            if (error instanceof openai_1.default.APIError) {
+                if (error.code === "insufficient_quota") {
+                    throw new errorHandler_1.AppError("AI service quota exceeded", 503);
+                }
+                if (error.code === "rate_limit_exceeded") {
+                    throw new errorHandler_1.AppError("AI service rate limit exceeded", 429);
+                }
+                if (error.code === "context_length_exceeded") {
+                    throw new errorHandler_1.AppError("Content too long for AI processing", 413);
+                }
+            }
+            throw new errorHandler_1.AppError("OpenAI completion generation failed", 500);
+        }
+    }
 }
 exports.OpenAIService = OpenAIService;
 exports.openaiService = new OpenAIService();
